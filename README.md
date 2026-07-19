@@ -52,7 +52,31 @@ You can use the analyzer directly from the terminal without starting the web ser
 
 ```bash
 cd backend
-PYTHONPATH=. /opt/homebrew/bin/python3 -m app.cli analyze "Warning CrashLoopBackOff Back-off restarting failed container"
+./k8s-sense analyze "Warning CrashLoopBackOff Back-off restarting failed container"
+```
+
+You can also read input from a file or from stdin:
+
+```bash
+cd backend
+PYTHONPATH=. ../.venv/bin/python -m app analyze --file ./sample.txt
+```
+
+```bash
+cat ./sample.txt | PYTHONPATH=. ../.venv/bin/python -m app analyze --stdin
+```
+
+To install the executable wrapper so it is available from your shell path:
+
+```bash
+cd backend
+./install.sh
+```
+
+Then run:
+
+```bash
+k8s-sense analyze "Warning CrashLoopBackOff Back-off restarting failed container"
 ```
 
 Example output:
