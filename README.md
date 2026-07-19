@@ -159,6 +159,14 @@ After the workflow completes, the image will be available as:
 docker pull ghcr.io/pratikdharu/k8s_troubleshooter:latest
 ```
 
+If you see `denied` when pulling, that usually means one of these is true:
+
+- the package has not been published successfully yet
+- the package is private and requires authentication
+- the package visibility is not set to public for anonymous pulls
+
+In GitHub, open the package in the Packages tab and set its visibility to Public if you want anonymous `docker pull` access.
+
 You can also build it locally with:
 
 ```bash
