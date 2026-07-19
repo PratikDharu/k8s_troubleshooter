@@ -55,7 +55,15 @@ cd backend
 ./k8s-sense analyze "Warning CrashLoopBackOff Back-off restarting failed container"
 ```
 
-You can also read input from a file or from stdin:
+You can also read input from a file or from stdin. For a friendlier experience, you can also run interactively and paste the troubleshooting text directly:
+
+```bash
+cd backend
+./k8s-sense analyze --interactive
+```
+
+This is especially useful for users who are copying logs or pod diagnostics from a terminal and want a quick answer without needing to remember flags.
+
 
 ```bash
 cd backend
@@ -98,6 +106,64 @@ For JSON output:
 ```bash
 cd backend
 PYTHONPATH=. /opt/homebrew/bin/python3 -m app.cli analyze --format json "Liveness probe failed: HTTP probe failed with statuscode: 500"
+```
+
+## Docker for end users
+
+Docker makes this much easier for end users because they do not need to install Python, create a virtual environment, or manage dependencies manually.
+
+### Run the API in a container
+
+From the repository root:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+### Run the CLI inside the container
+
+```bash
+docker compose run --rm backend analyze "Warning CrashLoopBackOff Back-off restarting failed container"
+```
+
+### Where users can use the image
+
+Because this project is hosted at https://github.com/PratikDharu/k8s_troubleshooter, the most natural place to publish the image for end users is GitHub Container Registry (GHCR).
+
+Once the image is published there, users can run it directly with:
+
+```bash
+docker pull ghcr.io/pratikdharu/k8s_troubleshooter:latest
+docker run --rm -p 8000:8000 ghcr.io/pratikdharu/k8s_troubleshooter:latest
+```
+
+That gives users a one-command experience: pull the image, run it, and use the app.
+
+## Publish the image to GHCR
+
+To publish the Docker image from this repository to GitHub Container Registry:
+
+1. Push the workflow file in [.github/workflows/publish-ghcr.yml](.github/workflows/publish-ghcr.yml) to GitHub.
+2. Make sure the repository has Actions enabled.
+3. The workflow uses the built-in `GITHUB_TOKEN`, which already has permission to publish packages for the repository.
+4. Trigger the workflow by pushing to the `main` branch or by running it manually from the Actions tab.
+
+After the workflow completes, the image will be available as:
+
+```bash
+docker pull ghcr.io/pratikdharu/k8s_troubleshooter:latest
+```
+
+You can also build it locally with:
+
+```bash
+docker build -t k8s-troubleshooter ./backend
+docker run --rm -p 8000:8000 k8s-troubleshooter
 ```
 
 ## Run the API

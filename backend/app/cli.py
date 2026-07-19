@@ -31,6 +31,11 @@ def build_parser():
         action="store_true",
         help="Read input from standard input",
     )
+    analyze_parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Prompt the user to paste troubleshooting text interactively",
+    )
     return parser
 
 
@@ -57,10 +62,20 @@ def read_text(args):
     if args.stdin:
         return sys.stdin.read()
 
+    if args.interactive:
+        print("Paste the troubleshooting text and press Enter on a blank line to finish:")
+        lines = []
+        while True:
+            line = input()
+            if line.strip() == "":
+                break
+            lines.append(line)
+        return "\n".join(lines)
+
     if args.text:
         return " ".join(args.text)
 
-    raise ValueError("No input provided. Pass text, --file, or --stdin.")
+    raise ValueError("No input provided. Pass text, --file, --stdin, or --interactive.")
 
 
 def main(argv=None):
