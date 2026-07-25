@@ -1,131 +1,44 @@
-# k8s_troubleshooter
+# K8s Troubleshooter
 
-K8sTroubleshooter is a Kubernetes troubleshooting assistant built with FastAPI and Python. The backend currently provides a structured analysis API for common Kubernetes failure patterns such as CrashLoopBackOff, ImagePullBackOff, OOMKilled, probe failures, and scheduling issues.
+A lightweight Kubernetes troubleshooting assistant that analyzes common Kubernetes errors and suggests likely causes and next steps.
 
-## Project structure
+Supports detection of issues including:
 
-```text
-backend/
-├── app/
-│   ├── api/
-│   ├── core/
-│   ├── models/
-│   ├── rules/
-│   ├── services/
-│   └── main.py
-├── tests/
-├── requirements.txt
-└── .env
-```
+- CrashLoopBackOff
+- ImagePullBackOff
+- OOMKilled
+- Liveness & Readiness probe failures
+- Scheduling failures
+- Container creation errors
 
-## Architecture
+---
 
-The backend follows a simple layered design:
+## Quick Start (Docker)
 
-1. API layer: exposes HTTP endpoints
-2. Service layer: coordinates analysis logic
-3. Rule engine: evaluates Kubernetes diagnostic text and returns structured findings
-4. Schemas: define request and response payloads
+The easiest way to use K8s Troubleshooter is with Docker.
 
-This makes it straightforward to evolve the system later with additional parsers, cluster connectors, or LLM-based explanation layers.
-
-## Prerequisites
-
-- Python 3.9+
-- pip
-
-## Setup
-
-From the repository root:
+### Run the API
 
 ```bash
-cd backend
-python3 -m venv ../.venv
-source ../.venv/bin/activate
-pip install -r requirements.txt
-pip install pytest httpx
+docker run --rm -p 8000:8000 \
+  ghcr.io/pratikdharu/k8s-troubleshooter:latest
 ```
 
-## Run the CLI
+Open:
 
-The easiest way to try it is with the built-in demo input:
+- http://localhost:8000/docs
+
+### Run the CLI
 
 ```bash
-cd backend
-./k8s-sense analyze --demo
+docker run --rm \
+  ghcr.io/pratikdharu/k8s-troubleshooter:latest \
+  analyze "Warning CrashLoopBackOff Back-off restarting failed container"
 ```
 
-That gives you an instant example result without needing to provide your own diagnostic text.
+### Using Ollama (Optional)
 
-You can also analyze your own input directly from the terminal without starting the web server:
-
-```bash
-cd backend
-./k8s-sense analyze "Warning CrashLoopBackOff Back-off restarting failed container"
-```
-
-You can also read input from a file or from stdin. For a friendlier experience, you can also run interactively and paste the troubleshooting text directly:
-
-```bash
-cd backend
-./k8s-sense analyze --interactive
-```
-
-This is especially useful for users who are copying logs or pod diagnostics from a terminal and want a quick answer without needing to remember flags.
-
-
-```bash
-cd backend
-PYTHONPATH=. ../.venv/bin/python -m app analyze --file ./sample.txt
-```
-
-```bash
-cat ./sample.txt | PYTHONPATH=. ../.venv/bin/python -m app analyze --stdin
-```
-
-To install the executable wrapper so it is available from your shell path:
-
-```bash
-cd backend
-./install.sh
-```
-
-Then run:
-
-```bash
-k8s-sense analyze "Warning CrashLoopBackOff Back-off restarting failed container"
-```
-
-Example output:
-
-```text
-Problem: CrashLoopBackOff
-Confidence: 95%
-
-The container is repeatedly restarting, which usually points to an application startup failure or a configuration issue. Check the pod logs and recent events.
-
-Suggested commands:
-- kubectl logs <pod>
-- kubectl describe pod <pod>
-- kubectl get events
-```
-
-For JSON output:
-
-```bash
-cd backend
-PYTHONPATH=. /opt/homebrew/bin/python3 -m app.cli analyze --format json "Liveness probe failed: HTTP probe failed with statuscode: 500"
-```
-
-## Docker for end users
-
-Docker makes this much easier for end users because they do not need to install Python, create a virtual environment, or manage dependencies manually.
-
-### Quick start for non-technical users
-
-If you just want to try it quickly, run the container and paste your Kubernetes error text:
-
-If you want the LLM fallback to work without providing API keys, run the container with a local Ollama instance reachable at http://host.docker.internal:11434 (or adjust OLLAMA_API_BASE as needed):
+Enable LLM-powered explanations using a local Ollama instance.
 
 ```bash
 docker run --rm -p 8000:8000 \
@@ -134,101 +47,98 @@ docker run --rm -p 8000:8000 \
   ghcr.io/pratikdharu/k8s-troubleshooter:latest
 ```
 
-```bash
-docker run --rm -p 8000:8000 ghcr.io/pratikdharu/k8s-troubleshooter:latest
-```
+---
 
-Then open:
+## Local Development
 
-- http://localhost:8000/docs
+### Requirements
 
-Or, if you prefer the CLI inside the container:
+- Python 3.9+
 
-```bash
-docker run --rm ghcr.io/pratikdharu/k8s-troubleshooter:latest analyze "Warning CrashLoopBackOff Back-off restarting failed container"
-```
-
-### Run the API in a container
-
-From the repository root:
-
-```bash
-docker compose up --build
-```
-
-Then open:
-
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-### Run the CLI inside the container
-
-```bash
-docker compose run --rm backend analyze "Warning CrashLoopBackOff Back-off restarting failed container"
-```
-
-### Where users can use the image
-
-Because this project is hosted at https://github.com/PratikDharu/k8s_troubleshooter, the most natural place to publish the image for end users is GitHub Container Registry (GHCR).
-
-Once the image is published there, users can run it directly with:
-
-```bash
-docker pull ghcr.io/pratikdharu/k8s_troubleshooter:latest
-docker run --rm -p 8000:8000 ghcr.io/pratikdharu/k8s_troubleshooter:latest
-```
-
-That gives users a one-command experience: pull the image, run it, and use the app.
-
-## Publish the image to GHCR
-
-To publish the Docker image from this repository to GitHub Container Registry:
-
-1. Push the workflow file in [.github/workflows/publish-ghcr.yml](.github/workflows/publish-ghcr.yml) to GitHub.
-2. Make sure the repository has Actions enabled.
-3. The workflow uses the built-in `GITHUB_TOKEN`, which already has permission to publish packages for the repository.
-4. Trigger the workflow by pushing to the `main` branch or by running it manually from the Actions tab.
-
-After the workflow completes, the image will be available as:
-
-```bash
-docker pull ghcr.io/pratikdharu/k8s_troubleshooter:latest
-```
-
-You can also build it locally with:
-
-```bash
-docker build -t k8s-troubleshooter ./backend
-docker run --rm -p 8000:8000 k8s-troubleshooter
-```
-
-## Run the API
-
-Start the FastAPI server:
+### Setup
 
 ```bash
 cd backend
-PYTHONPATH=. /opt/homebrew/bin/python3 -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+python3 -m venv ../.venv
+source ../.venv/bin/activate
+
+pip install -r requirements.txt
 ```
 
-Then open:
+---
 
-- Swagger UI: http://127.0.0.1:8000/docs
-- ReDoc: http://127.0.0.1:8000/redoc
+## CLI Usage
 
-## Example requests
+Analyze demo data:
 
-### Health check
+```bash
+./k8s-sense analyze --demo
+```
+
+Analyze Kubernetes output:
+
+```bash
+./k8s-sense analyze "Warning CrashLoopBackOff Back-off restarting failed container"
+```
+
+Analyze a file:
+
+```bash
+./k8s-sense analyze --file sample.txt
+```
+
+Interactive mode:
+
+```bash
+./k8s-sense analyze --interactive
+```
+
+JSON output:
+
+```bash
+./k8s-sense analyze --format json "Liveness probe failed"
+```
+
+Install the CLI globally:
+
+```bash
+./install.sh
+```
+
+Then use:
+
+```bash
+k8s-sense analyze "<kubernetes error>"
+```
+
+---
+
+## API
+
+Start the server:
+
+```bash
+cd backend
+
+PYTHONPATH=. python -m uvicorn app.main:app --reload
+```
+
+Swagger UI:
+
+http://127.0.0.1:8000/docs
+
+Health check:
 
 ```bash
 curl http://127.0.0.1:8000/health
 ```
 
-### Analyze a Kubernetes issue
+Analyze:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/analyze \
-  -H 'Content-Type: application/json' \
+  -H "Content-Type: application/json" \
   -d '{"text":"Warning CrashLoopBackOff Back-off restarting failed container"}'
 ```
 
@@ -237,8 +147,8 @@ Example response:
 ```json
 {
   "problem": "CrashLoopBackOff",
-  "explanation": "The container is repeatedly restarting, which usually points to an application startup failure or a configuration issue. Check the pod logs and recent events.",
   "confidence": 95,
+  "explanation": "The container is repeatedly restarting, which usually points to an application startup failure or configuration issue.",
   "commands": [
     "kubectl logs <pod>",
     "kubectl describe pod <pod>",
@@ -247,19 +157,21 @@ Example response:
 }
 ```
 
-## Run tests
+---
+
+## Testing
 
 ```bash
-cd /Users/pratik/Repos/k8s_troubleshooter
-.venv/bin/python -m pytest backend/tests -q
+pytest backend/tests -q
 ```
 
-## Next steps
+---
 
-The current version uses deterministic rules over diagnostic text. The next evolution can add:
+## Features
 
-- parsing of real kubectl output
-- structured event extraction
-- cluster connectivity and live diagnostics
-- LLM-powered explanations on top of the structured analysis
-
+- Rule-based Kubernetes diagnostics
+- FastAPI REST API
+- Command-line interface
+- Docker image
+- JSON output support
+- Optional Ollama integration for richer explanations
