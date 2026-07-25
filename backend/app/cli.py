@@ -14,7 +14,7 @@ def build_parser():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     analyze_parser = subparsers.add_parser("analyze", help="Analyze a Kubernetes issue description")
-    analyze_parser.add_argument("text", nargs="*", help="Text to analyze")
+    analyze_parser.add_argument("text", nargs="*", help="Text or diagnostics to analyze")
     analyze_parser.add_argument(
         "--format",
         choices=["text", "json"],
@@ -29,12 +29,17 @@ def build_parser():
     analyze_parser.add_argument(
         "--stdin",
         action="store_true",
-        help="Read input from standard input",
+        help="Read pasted diagnostics from standard input",
     )
     analyze_parser.add_argument(
         "--interactive",
         action="store_true",
         help="Prompt the user to paste troubleshooting text interactively",
+    )
+    analyze_parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Run with a built-in example diagnostic so you can try the tool immediately",
     )
     return parser
 
@@ -71,6 +76,9 @@ def read_text(args):
                 break
             lines.append(line)
         return "\n".join(lines)
+
+    if args.demo:
+        return "Warning CrashLoopBackOff Back-off restarting failed container"
 
     if args.text:
         return " ".join(args.text)

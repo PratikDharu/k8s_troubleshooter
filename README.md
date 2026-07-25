@@ -1,6 +1,6 @@
 # k8s_troubleshooter
 
-K8sSense is a Kubernetes troubleshooting assistant built with FastAPI and Python. The backend currently provides a structured analysis API for common Kubernetes failure patterns such as CrashLoopBackOff, ImagePullBackOff, OOMKilled, probe failures, and scheduling issues.
+K8sTroubleshooter is a Kubernetes troubleshooting assistant built with FastAPI and Python. The backend currently provides a structured analysis API for common Kubernetes failure patterns such as CrashLoopBackOff, ImagePullBackOff, OOMKilled, probe failures, and scheduling issues.
 
 ## Project structure
 
@@ -48,7 +48,16 @@ pip install pytest httpx
 
 ## Run the CLI
 
-You can use the analyzer directly from the terminal without starting the web server:
+The easiest way to try it is with the built-in demo input:
+
+```bash
+cd backend
+./k8s-sense analyze --demo
+```
+
+That gives you an instant example result without needing to provide your own diagnostic text.
+
+You can also analyze your own input directly from the terminal without starting the web server:
 
 ```bash
 cd backend
@@ -112,6 +121,33 @@ PYTHONPATH=. /opt/homebrew/bin/python3 -m app.cli analyze --format json "Livenes
 
 Docker makes this much easier for end users because they do not need to install Python, create a virtual environment, or manage dependencies manually.
 
+### Quick start for non-technical users
+
+If you just want to try it quickly, run the container and paste your Kubernetes error text:
+
+If you want the LLM fallback to work without providing API keys, run the container with a local Ollama instance reachable at http://host.docker.internal:11434 (or adjust OLLAMA_API_BASE as needed):
+
+```bash
+docker run --rm -p 8000:8000 \
+  -e OLLAMA_API_BASE=http://host.docker.internal:11434/api \
+  -e OLLAMA_MODEL=llama3.2 \
+  ghcr.io/pratikdharu/k8s-troubleshooter:latest
+```
+
+```bash
+docker run --rm -p 8000:8000 ghcr.io/pratikdharu/k8s-troubleshooter:latest
+```
+
+Then open:
+
+- http://localhost:8000/docs
+
+Or, if you prefer the CLI inside the container:
+
+```bash
+docker run --rm ghcr.io/pratikdharu/k8s-troubleshooter:latest analyze "Warning CrashLoopBackOff Back-off restarting failed container"
+```
+
 ### Run the API in a container
 
 From the repository root:
@@ -158,14 +194,6 @@ After the workflow completes, the image will be available as:
 ```bash
 docker pull ghcr.io/pratikdharu/k8s_troubleshooter:latest
 ```
-
-If you see `denied` when pulling, that usually means one of these is true:
-
-- the package has not been published successfully yet
-- the package is private and requires authentication
-- the package visibility is not set to public for anonymous pulls
-
-In GitHub, open the package in the Packages tab and set its visibility to Public if you want anonymous `docker pull` access.
 
 You can also build it locally with:
 
